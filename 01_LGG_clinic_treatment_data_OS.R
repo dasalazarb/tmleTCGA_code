@@ -6,11 +6,71 @@ library(dplyr)
 library(gtsummary)
 library(DT)
 
-if (identical(character(0), dir("D:/pathFeatureLabelKernels"))) {
-  central_path <- "G:/.shortcut-targets-by-id/1xYVRN5UwMFXmj3OdNbFJmArfObc9kWSH/Tutorial_2018-10/03_Resultados/DataTCGA/tmleTCGA/data"
-} else {
-  central_path <- "D:"
+detect_central_path <- function(primary_path, fallback_path) {
+  if (identical(character(0), dir(primary_path))) fallback_path else primary_path
 }
+
+clean_drug_names <- function(clinical_drug, drug_correction) {
+  correction_lookup <- setNames(drug_correction$Correction, drug_correction$OldName)
+
+  clinical_drug %>%
+    mutate(drug_name = gsub(" ", "", tolower(drug_name)),
+           drug_name = coalesce(correction_lookup[drug_name], drug_name)) %>%
+    filter(!grepl("nos", drug_name), !grepl("^.{0}$", drug_name)) %>%
+    rename(pharmaceutical_therapy_drug_name = drug_name) %>%
+    group_by(bcr_patient_barcode, pharmaceutical_therapy_drug_name) %>%
+    filter(days_to_drug_therapy_start == min(days_to_drug_therapy_start)) %>%
+    ungroup()
+}
+
+standardize_radiation <- function(clinical_radiation) {
+  clinical_radiation %>%
+    select(bcr_patient_barcode, days_to_radiation_therapy_start, days_to_radiation_therapy_end, radiation_type, regimen_indication) %>%
+    mutate(radiation_type = case_when(
+      is.na(radiation_type) ~ "radiation",
+      radiation_type %in% c("external beam", "radioisotope", "external", "other", "") ~ "radiation",
+      TRUE ~ tolower(radiation_type)
+    )) %>%
+    select(-regimen_indication, -days_to_radiation_therapy_end) %>%
+    distinct() %>%
+    rename(treat = radiation_type, days_to_therapy_start = days_to_radiation_therapy_start)
+}
+
+build_treatment <- function(drug_df, radiation_df, survival_df, time_col) {
+  time_col <- rlang::ensym(time_col)
+
+  survival_df <- survival_df %>%
+    filter(type %in% c("LGG")) %>%
+    select(-type) %>%
+    mutate(survival_time = as.numeric(.data[[rlang::as_string(time_col)]]))
+
+  bind_rows(
+    drug_df %>%
+      select(bcr_patient_barcode, days_to_drug_therapy_start, pharmaceutical_therapy_drug_name) %>%
+      rename(days_to_therapy_start = days_to_drug_therapy_start, treat = pharmaceutical_therapy_drug_name),
+    radiation_df
+  ) %>%
+    inner_join(survival_df, by = "bcr_patient_barcode") %>%
+    mutate(days_to_therapy_start = ifelse(days_to_therapy_start <= 0, 9999, days_to_therapy_start)) %>%
+    filter(!is.na(days_to_therapy_start)) %>%
+    arrange(bcr_patient_barcode, days_to_therapy_start) %>%
+    mutate(treat = ifelse(is.na(days_to_therapy_start) | is.na(survival_time), treat,
+                          ifelse(days_to_therapy_start > survival_time, paste0("**", treat, "**"), treat))) %>%
+    filter(!grepl("\\*\\*", treat)) %>%
+    group_by(bcr_patient_barcode) %>%
+    mutate(
+      treatment = paste(unique(sort(treat)), collapse = "+"),
+      days_to_therapy_start = max(days_to_therapy_start, na.rm = TRUE)
+    ) %>%
+    ungroup() %>%
+    select(-treat) %>%
+    distinct()
+}
+
+central_path <- detect_central_path(
+  "D:/pathFeatureLabelKernels",
+  "G:/.shortcut-targets-by-id/1xYVRN5UwMFXmj3OdNbFJmArfObc9kWSH/Tutorial_2018-10/03_Resultados/DataTCGA/tmleTCGA/data"
+)
 
 pathFeatureLabel <- central_path
 
@@ -36,81 +96,28 @@ clinical.follow.up <- GDCprepare_clinic(query,"follow_up"); names(clinical.follo
 #### ..... Cleaning data for LGG ..... ####
 ### ----------------------------------- ###
 ### ... 1. drugs ... ###
-drug_correction <- read.csv(file = paste0(pathFeatureLabel, "/DrugCorrection1.csv")); head(drug_correction)
-drug_correction <- drug_correction %>% 
-  dplyr::mutate(OldName=gsub(" ", "", tolower(OldName)), Correction=gsub(" ", "", tolower(Correction)))
+drug_correction <- read.csv(file = paste0(pathFeatureLabel, "/DrugCorrection1.csv")) %>%
+  mutate(OldName = gsub(" ", "", tolower(OldName)),
+         Correction = gsub(" ", "", tolower(Correction)))
 
-drug_lgg <- clinical.drug %>% 
-  dplyr::mutate(drug_name=gsub(" ", "", tolower(drug_name))) %>% 
-  dplyr::mutate(drug_name=unlist(lapply(drug_name, function(x) ifelse(x %in% drug_correction$OldName, unique(drug_correction[drug_correction$OldName %in% x,]$Correction), x)) ) ) %>% 
-  dplyr::filter(!grepl("nos", drug_name)) %>% 
-  dplyr::filter(!grepl("^.{0}$", drug_name)) %>% 
-  dplyr::rename(pharmaceutical_therapy_drug_name=drug_name)
+drug_lgg <- clean_drug_names(clinical.drug, drug_correction)
 head(drug_lgg);dim(drug_lgg); sort(unique(drug_lgg$pharmaceutical_therapy_drug_name))
-
-drug_lgg <- as.data.frame(drug_lgg %>% 
-                            dplyr::group_by(bcr_patient_barcode, pharmaceutical_therapy_drug_name) %>% 
-                            dplyr::filter(days_to_drug_therapy_start == min(days_to_drug_therapy_start)))
-head(drug_lgg);dim(drug_lgg)
 
 write.csv(drug_lgg, file=paste0(pathFeatureLabel, "/drug_treatment_TCGA_LGG.csv"), row.names = FALSE)
 
 ### ... 2. Radiation ... ###
-radiation_lgg <- clinical.radiation %>% 
-  dplyr::select(bcr_patient_barcode, days_to_radiation_therapy_start, days_to_radiation_therapy_end, radiation_type, regimen_indication) %>% 
-  dplyr::mutate(radiation_type=tolower(radiation_type)) %>% 
-  dplyr::select(-regimen_indication)
-
-radiation_lgg$radiation_type[radiation_lgg$radiation_type == "external beam"] <- "radiation"
-radiation_lgg$radiation_type[radiation_lgg$radiation_type == ""] <- "radiation"
-radiation_lgg$radiation_type[radiation_lgg$radiation_type == "radioisotope"] <- "radiation"
-radiation_lgg$radiation_type[radiation_lgg$radiation_type == "external"] <- "radiation"
-radiation_lgg$radiation_type[radiation_lgg$radiation_type == "other"] <- "radiation"
-
-radiation_lgg <- unique(radiation_lgg)
-colnames(radiation_lgg)[colnames(radiation_lgg) %in% "radiation_type"] <- "treat"
+radiation_lgg <- standardize_radiation(clinical.radiation)
 
 head(radiation_lgg);dim(radiation_lgg)
 
 ## ... 3. treatment: RAD + DRUGs ... ##
-treatment_lgg <- rbind(drug_lgg %>% 
-                         dplyr::select(bcr_patient_barcode, days_to_drug_therapy_start, pharmaceutical_therapy_drug_name, -days_to_drug_therapy_end) %>% 
-                         dplyr::rename(days_to_therapy_start=days_to_drug_therapy_start, treat=pharmaceutical_therapy_drug_name), 
-                       radiation_lgg %>% 
-                         dplyr::select(-days_to_radiation_therapy_end) %>% 
-                         dplyr::rename(days_to_therapy_start=days_to_radiation_therapy_start)) %>% 
-  dplyr::inner_join(read.csv(paste0(pathFeatureLabel,"/survivalTCGA.csv"), header = TRUE, sep = ",") %>% ## delta hace referencia a los right-censored obs
-                      dplyr::select(bcr_patient_barcode, type, OS, OS.time) %>% 
-                      # dplyr::select(bcr_patient_barcode, type, PFI, PFI.time) %>% 
-                      # dplyr::rename(PFI=PFI, PFI.time=PFI.time) %>% 
-                      dplyr::filter(type %in% c("LGG")) %>% 
-                      dplyr::select(-type) %>% 
-                      dplyr::mutate(OS.time = as.numeric(OS.time)), by="bcr_patient_barcode") %>% 
-  dplyr::mutate(days_to_therapy_start = ifelse(days_to_therapy_start <= 0, 9999, days_to_therapy_start)) %>% 
-  dplyr::filter(!is.na(days_to_therapy_start)) %>% 
-  dplyr::arrange(bcr_patient_barcode, days_to_therapy_start) %>% 
-  dplyr::mutate(treat = ifelse(is.na(days_to_therapy_start) | is.na(OS.time),treat,
-                               ifelse(days_to_therapy_start > OS.time, paste0("**",treat, "**"), treat))
-  ) %>% 
-  dplyr::filter(!grepl("\\*\\*", treat)) %>% 
-  dplyr::group_by(bcr_patient_barcode) %>%
-  dplyr::mutate(treatment=paste(unique(sort(treat)), collapse="+")) %>%
-  dplyr::ungroup() %>%
-  # dplyr::filter(
-  #   grepl("^radiation\\+temozolomide$", treatment) |
-  #     # grepl("^bevacizumab\\+radiation\\+temozolomide$",treatment) |
-  #     # grepl("bevacizumab.*temozolomide.*radiation|bevacizumab.*radiation*.temozolomide|temozolomide.*bevacizumab.*radiation|temozolomide.*radiation.*bevacizumab|radiation.*temozolomide.*bevacizumab|radiation.*bevacizumab.*temozolomide",treatment) |
-  #     # grepl("^bevacizumab\\+temozolomide$",treatment) | 
-  #   grepl("^radiation$",treatment) |
-  #   grepl("^temozolomide$",treatment) 
-  #   # (grepl("^bevacizumab$",treatment) & grepl("^radiation$",treatment) & grepl("^temozolomide$",treatment)) |
-  #   # grepl("^bevacizumab\\+radiation$",treatment)
-  # ) %>% 
-  dplyr::group_by(bcr_patient_barcode) %>% 
-  dplyr::mutate(days_to_therapy_start = max(days_to_therapy_start,na.rm = TRUE)) %>%
-  dplyr::ungroup() %>% 
-  dplyr::select(-treat) %>% 
-  dplyr::distinct()
+treatment_lgg <- build_treatment(
+  drug_lgg,
+  radiation_lgg,
+  read.csv(paste0(pathFeatureLabel, "/survivalTCGA.csv"), header = TRUE, sep = ",") %>%
+    select(bcr_patient_barcode, type, OS, OS.time),
+  time_col = OS.time
+)
 
 head(treatment_lgg, 20); dim(treatment_lgg); table(treatment_lgg$treatment, treatment_lgg$OS)
 
