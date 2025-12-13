@@ -14,7 +14,7 @@ Repositorio con scripts para experimentar con Targeted Maximum Likelihood Estima
 
 ## Estructura del repositorio
 
-- **tmle_early*.R / tmle_late*.R / tmle_Intermediate_quick.R / tmle_all_quick*.R**: pipelines TMLE con estrategias de integración temprana, tardía e intermedia de datos clínicos y ómicos.
+- **quick_tmle_early_integration.R / quick_tmle_late_integration.R / quick_tmle_intermediate_integration.R / tmle_all_quick*.R**: pipelines TMLE con estrategias de integración temprana, tardía e intermedia de datos clínicos y ómicos.
 - **tmle3_Late.R**, **tmle_ps_and_missmech.R**, **tmleFromScratch.R**: variantes de estimación TMLE, PS y mecanismos de falta con diferentes configuraciones.
 - **func_learners.R**, **func_learners_v2.R**, **func_SuperLearners.R**: definiciones de *wrappers* para `SuperLearner` (random forest, xgboost, MARS, GLM, etc.) y ensamblados preconfigurados.
 - **func_DimenReduc.R**: utilidades para reducción de dimensionalidad (PCA, KPCA, NMF, autoencoders) sobre matrices de expresión y CNV.
@@ -31,9 +31,9 @@ Repositorio con scripts para experimentar con Targeted Maximum Likelihood Estima
 3. **Reducir dimensionalidad (opcional)**: aplicar `func_DimenReduc.R` o `reducDimenMethods_Optuna.py` para crear representaciones comprimidas (PCA, NMF, autoencoders) antes de entrenar modelos.
 4. **Definir *learners* y ensamblados**: cargar `func_learners_v2.R` y `func_SuperLearners.R` para disponer de *wrappers* específicos por modalidad de datos (clínico, mRNA, CNV) y combinaciones de integración.
 5. **Ejecutar TMLE**: elegir la estrategia de integración deseada:
-   - Integración temprana: `tmle_early_quick.R` o variantes.
-   - Integración intermedia (p. ej. autoencoders o PCA): `tmle_Intermediate_quick.R` y versiones `tmle_all_quick-v*` que combinan varias modalidades.
-   - Integración tardía: `tmle_late_quick.R` o `tmle3_Late.R`.
+  - Integración temprana: `quick_tmle_early_integration.R` o variantes.
+  - Integración intermedia (p. ej. autoencoders o PCA): `quick_tmle_intermediate_integration.R` y versiones `tmle_all_quick-v*` que combinan varias modalidades.
+  - Integración tardía: `quick_tmle_late_integration.R` o `tmle3_Late.R`.
 6. **Explorar resultados**: revisar gráficos (por ejemplo, densidades de puntaje de propensión y riesgos) generados en los scripts TMLE o `plot_comparison_var50_to_1000.R`, y tablas resumen de `gtsummary_O_data.R`.
 
 ## Ejecución rápida en R
@@ -46,7 +46,7 @@ source("func_SuperLearners.R")
 # Ajusta las rutas de origen de datos dentro de cada script según tu entorno
 
 # 2) Ejecutar un pipeline TMLE (ejemplo: integración temprana)
-source("tmle_early_quick.R")
+source("quick_tmle_early_integration.R")
 
 # 3) Visualizar las salidas impresas o gráficos producidos por el script
 ```

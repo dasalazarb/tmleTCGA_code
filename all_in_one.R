@@ -18,6 +18,6 @@
 ##
 ## ---------------------------
 
-source("C:/Users/da.salazarb/Documents/tmle/tmleTCGA/tmle_early_quick.R")
-source("C:/Users/da.salazarb/Documents/tmle/tmleTCGA/tmle_intermediate_quick.R")
-source("C:/Users/da.salazarb/Documents/tmle/tmleTCGA/tmle_late_quick.R")
+source("quick_tmle_early_integration.R")
+source("quick_tmle_intermediate_integration.R")
+source("quick_tmle_late_integration.R")
