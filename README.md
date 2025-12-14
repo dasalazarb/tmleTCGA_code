@@ -14,8 +14,9 @@ Repositorio con scripts para experimentar con Targeted Maximum Likelihood Estima
 
 ## Estructura del repositorio
 
-- **quick_tmle_early_integration.R / quick_tmle_late_integration.R / quick_tmle_intermediate_integration.R / tmle_all_quick*.R**: pipelines TMLE con estrategias de integración temprana, tardía e intermedia de datos clínicos y ómicos.
-- **tmle3_Late.R**, **tmle_ps_and_missmech.R**, **tmleFromScratch.R**: variantes de estimación TMLE, PS y mecanismos de falta con diferentes configuraciones.
+- **quick_tmle_early_integration.R / quick_tmle_late_integration.R / quick_tmle_intermediate_integration.R / tmle_all_quick-v4.R**: pipelines TMLE con estrategias de integración temprana, tardía e intermedia de datos clínicos y ómicos.
+- **tmle_ps_and_missmech.R**: funciones auxiliares para TMLE y mecanismos de falta con diferentes configuraciones.
+- **no_used_*.R**: versiones antiguas o dependientes de rutas absolutas que se conservan solo como referencia histórica.
 - **func_learners.R**, **func_learners_v2.R**, **func_SuperLearners.R**: definiciones de *wrappers* para `SuperLearner` (random forest, xgboost, MARS, GLM, etc.) y ensamblados preconfigurados.
 - **func_DimenReduc.R**: utilidades para reducción de dimensionalidad (PCA, KPCA, NMF, autoencoders) sobre matrices de expresión y CNV.
 - **func_extractVars.R**, **func_othersFromtmlePackage.R**: funciones auxiliares para preparar variables de entrada y compatibilidad con el paquete `tmle`.
