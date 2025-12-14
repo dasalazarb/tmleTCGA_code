@@ -68,6 +68,21 @@ python early_integration_example.py
 
 El script genera datos sintéticos, estima probabilidades de tratamiento, mecanismo de falta y resultados potenciales usando regresión logística implementada solo con la biblioteca estándar. Al final imprime el tamaño de la muestra, la media de los puntajes de propensión y una estimación del ATE por g-computation para validar el recorrido de principio a fin.
 
+### Ejemplo autocontenido en R para integración temprana
+
+Si quieres ver cómo se encadenan las funciones de los scripts R para estimar `g1W`, `pDelta1` y `Q` y lanzar `tmle()` sin depender de archivos externos, ejecuta:
+
+```r
+Rscript early_integration_quickstart.R
+```
+
+El flujo realiza lo siguiente:
+
+- `synthetic_integration_examples.R`: genera `Y`, `A`, `Delta` y la vista `W_early`.
+- `func_extractVars.R`: aporta los screeners `func_clinical`/`new.screen.randomForest` usados por los learners.
+- `func_SuperLearners.R`: utiliza `SL.early.rf` para ajustar los modelos de probabilidad de tratamiento, mecanismo de observación y resultado.
+- `tmle`: combina `g1W`, `pDelta1` y `Q` para entregar la estimación TMLE del efecto del tratamiento.
+
 ## Ejemplo mínimo con datos sintéticos
 
 Si quieres probar la estructura de las tres estrategias de integración sin preparar datos reales, ejecuta:
