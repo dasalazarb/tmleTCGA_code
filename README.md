@@ -58,6 +58,16 @@ source("quick_tmle_early_integration.R")
 
 Para usar los ensamblados completos con múltiples estrategias de integración, ejecuta `tmle_all_quick-v4.R`, que arma bibliotecas `SuperLearner` con learners clínicos, ómicos y reducciones de dimensionalidad.
 
+### Ejemplo autocontenido (sin dependencias externas)
+
+Si tu entorno no tiene R ni paquetes instalados, puedes probar un flujo simplificado de integración temprana con un script en Python puro:
+
+```bash
+python early_integration_example.py
+```
+
+El script genera datos sintéticos, estima probabilidades de tratamiento, mecanismo de falta y resultados potenciales usando regresión logística implementada solo con la biblioteca estándar. Al final imprime el tamaño de la muestra, la media de los puntajes de propensión y una estimación del ATE por g-computation para validar el recorrido de principio a fin.
+
 ## Ejemplo mínimo con datos sintéticos
 
 Si quieres probar la estructura de las tres estrategias de integración sin preparar datos reales, ejecuta:
