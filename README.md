@@ -1,106 +1,106 @@
 # tmleTCGA
 
-Repositorio con scripts para experimentar con Targeted Maximum Likelihood Estimation (TMLE) y modelos de *machine learning* aplicados a datos de cáncer de la colección TCGA (principalmente GBM y LGG). El código está organizado en R y Python y cubre desde la construcción de matrices de características hasta la evaluación de efectos de tratamiento con diferentes estrategias de integración de datos ómicos.
+Repository with scripts to experiment with Targeted Maximum Likelihood Estimation (TMLE) and machine-learning models applied to TCGA cancer data (mainly GBM and LGG). The code is written in both R and Python and covers everything from building feature matrices to evaluating treatment effects with different omics-integration strategies.
 
-## Requisitos
+## Requirements
 
 ### R
-- R \>= 4.0.
-- Paquetes principales: `tmle`, `SuperLearner`, `caret`, `dplyr`, `ggplot2`, `ranger`, `xgboost`, `earth`, `NMF`, `PMA`, `keras`, `ANN2`, `kernlab`, `nsprcomp`, `pcaMethods`, `gtsummary`.
-- Algunos scripts cargan rutas absolutas de Windows (por ejemplo, `C:/Users/...`). Ajústalas a tu entorno antes de ejecutar.
+- R >= 4.0.
+- Main packages: `tmle`, `SuperLearner`, `caret`, `dplyr`, `ggplot2`, `ranger`, `xgboost`, `earth`, `NMF`, `PMA`, `keras`, `ANN2`, `kernlab`, `nsprcomp`, `pcaMethods`, `gtsummary`.
+- Some scripts load Windows absolute paths (for example, `C:/Users/...`). Adjust them to your environment before running.
 
-### Python (opcional)
-- Python 3.8+ con `optuna`, `pandas`, `scikit-learn`, `tensorflow` para los experimentos de reducción de dimensionalidad (`reducDimenMethods_Optuna.py`).
+### Python (optional)
+- Python 3.8+ with `optuna`, `pandas`, `scikit-learn`, and `tensorflow` for the dimensionality-reduction experiments in `reducDimenMethods_Optuna.py`.
 
-## Estructura del repositorio
+## Repository structure
 
-- **quick_tmle_early_integration.R / quick_tmle_late_integration.R / quick_tmle_intermediate_integration.R / tmle_all_quick-v4.R**: pipelines TMLE con estrategias de integración temprana, tardía e intermedia de datos clínicos y ómicos.
-- **tmle_ps_and_missmech.R**: funciones auxiliares para TMLE y mecanismos de falta con diferentes configuraciones.
-- **no_used_*.R**: versiones antiguas o dependientes de rutas absolutas que se conservan solo como referencia histórica.
-- **func_learners.R**, **func_learners_v2.R**, **func_SuperLearners.R**: definiciones de *wrappers* para `SuperLearner` (random forest, xgboost, MARS, GLM, etc.) y ensamblados preconfigurados.
-- **func_DimenReduc.R**: utilidades para reducción de dimensionalidad (PCA, KPCA, NMF, autoencoders) sobre matrices de expresión y CNV.
-- **synthetic_integration_examples.R**: genera datos sintéticos listos para ejemplos rápidos de integración temprana, intermedia y tardía sin depender de archivos externos.
-- **func_extractVars.R**, **func_othersFromtmlePackage.R**: funciones auxiliares para preparar variables de entrada y compatibilidad con el paquete `tmle`.
-- **give_O_*.R**, **01_LGG_clinic_treatment_data_*.R**: scripts de preparación de datos clínicos/ómicos y generación de matrices de entrada (*O* = {Y, A, Δ, W}).
-- **gtsummary_O_data.R**, **plot_comparison_var50_to_1000.R**: resúmenes y visualizaciones de resultados.
-- **reducDimenMethods_Optuna.py**: búsqueda de hiperparámetros con Optuna para modelos de reducción de dimensionalidad en Python.
-- **LICENSE**: licencia MIT.
+- **quick_tmle_early_integration.R / quick_tmle_late_integration.R / quick_tmle_intermediate_integration.R / tmle_all_quick-v4.R**: TMLE pipelines for early, late, and intermediate integration of clinical and omics data.
+- **tmle_ps_and_missmech.R**: helper functions for TMLE and missingness mechanisms with different configurations.
+- **no_used_*.R**: older versions or scripts tied to absolute paths kept only for historical reference.
+- **func_learners.R**, **func_learners_v2.R**, **func_SuperLearners.R**: definitions of `SuperLearner` wrappers (random forest, xgboost, MARS, GLM, etc.) and preconfigured ensembles.
+- **func_DimenReduc.R**: utilities for dimensionality reduction (PCA, KPCA, NMF, autoencoders) on expression and CNV matrices.
+- **synthetic_integration_examples.R**: generates synthetic data for quick examples of early, intermediate, and late integration without external files.
+- **func_extractVars.R**, **func_othersFromtmlePackage.R**: helper functions to prepare input variables and maintain compatibility with the `tmle` package.
+- **give_O_*.R**, **01_LGG_clinic_treatment_data_*.R**: scripts to prepare clinical/omics data and build input matrices (O = {Y, A, Δ, W}).
+- **gtsummary_O_data.R**, **plot_comparison_var50_to_1000.R**: result summaries and visualizations.
+- **reducDimenMethods_Optuna.py**: hyperparameter search with Optuna for dimensionality-reduction models in Python.
+- **LICENSE**: MIT license.
 
-## Flujo de trabajo sugerido
+## Suggested workflow
 
-1. **Preparar datos clínicos y de tratamiento**: ejecutar `01_LGG_clinic_treatment_data_OS.R` o `01_LGG_clinic_treatment_data_PFI.R` para construir tablas de supervivencia y tratamientos.
-2. **Construir matrices de características**: usar los scripts `give_O_*.R` para combinar resultados de ómicas (mRNA, CNV) con las variables clínicas y obtener `Y`, `A`, `Δ` y `W`.
-3. **Reducir dimensionalidad (opcional)**: aplicar `func_DimenReduc.R` o `reducDimenMethods_Optuna.py` para crear representaciones comprimidas (PCA, NMF, autoencoders) antes de entrenar modelos.
-4. **Definir *learners* y ensamblados**: cargar `func_learners_v2.R` y `func_SuperLearners.R` para disponer de *wrappers* específicos por modalidad de datos (clínico, mRNA, CNV) y combinaciones de integración.
-5. **Ejecutar TMLE**: elegir la estrategia de integración deseada:
-  - Integración temprana: `quick_tmle_early_integration.R` o variantes.
-  - Integración intermedia (p. ej. autoencoders o PCA): `quick_tmle_intermediate_integration.R` y versiones `tmle_all_quick-v*` que combinan varias modalidades.
-  - Integración tardía: `quick_tmle_late_integration.R` o `tmle3_Late.R`.
-6. **Explorar resultados**: revisar gráficos (por ejemplo, densidades de puntaje de propensión y riesgos) generados en los scripts TMLE o `plot_comparison_var50_to_1000.R`, y tablas resumen de `gtsummary_O_data.R`.
+1. **Prepare clinical and treatment data**: run `01_LGG_clinic_treatment_data_OS.R` or `01_LGG_clinic_treatment_data_PFI.R` to build survival and treatment tables.
+2. **Build feature matrices**: use the `give_O_*.R` scripts to combine omics results (mRNA, CNV) with clinical variables to obtain `Y`, `A`, `Δ`, and `W`.
+3. **Reduce dimensionality (optional)**: apply `func_DimenReduc.R` or `reducDimenMethods_Optuna.py` to create compressed representations (PCA, NMF, autoencoders) before training models.
+4. **Define learners and ensembles**: load `func_learners_v2.R` and `func_SuperLearners.R` to access wrappers tailored to each data modality (clinical, mRNA, CNV) and integration combinations.
+5. **Run TMLE**: choose your integration strategy:
+   - Early integration: `quick_tmle_early_integration.R` or variants.
+   - Intermediate integration (e.g., autoencoders or PCA): `quick_tmle_intermediate_integration.R` and the `tmle_all_quick-v*` versions that combine multiple modalities.
+   - Late integration: `quick_tmle_late_integration.R` or `tmle3_Late.R`.
+6. **Explore results**: review plots (for example, propensity-score and risk densities) produced in the TMLE scripts or `plot_comparison_var50_to_1000.R`, and summary tables from `gtsummary_O_data.R`.
 
-## Ejecución rápida en R
+## Quick R run
 
 ```r
-# 1) Cargar funciones y datos
+# 1) Load functions and data
 source("func_extractVars.R")
 source("func_learners_v2.R")
 source("func_SuperLearners.R")
-# Ajusta las rutas de origen de datos dentro de cada script según tu entorno.
-# quick_tmle_early_integration.R usa la variable de entorno TMLE_TCGA_DATA; si
-# el archivo no existe, generará automáticamente un dataset sintético para
-# ejecutar el ejemplo de integración temprana de principio a fin.
+# Adjust the data source paths inside each script to match your environment.
+# quick_tmle_early_integration.R uses the environment variable TMLE_TCGA_DATA; if
+# the file does not exist, it will automatically generate a synthetic dataset to
+# run the early-integration example end-to-end.
 
-# 2) Ejecutar un pipeline TMLE (ejemplo: integración temprana)
+# 2) Run a TMLE pipeline (example: early integration)
 source("quick_tmle_early_integration.R")
 
-# 3) Visualizar las salidas impresas o gráficos producidos por el script
+# 3) Review printed outputs or plots produced by the script
 ```
 
-Para usar los ensamblados completos con múltiples estrategias de integración, ejecuta `tmle_all_quick-v4.R`, que arma bibliotecas `SuperLearner` con learners clínicos, ómicos y reducciones de dimensionalidad.
+To use the full ensembles with multiple integration strategies, run `tmle_all_quick-v4.R`, which builds `SuperLearner` libraries with clinical, omics, and dimensionality-reduction learners.
 
-### Ejemplo autocontenido (sin dependencias externas)
+### Self-contained example (no external dependencies)
 
-Si tu entorno no tiene R ni paquetes instalados, puedes probar un flujo simplificado de integración temprana con un script en Python puro:
+If your environment does not have R or packages installed, you can try a simplified early-integration flow with a pure Python script:
 
 ```bash
 python early_integration_example.py
 ```
 
-El script genera datos sintéticos, estima probabilidades de tratamiento, mecanismo de falta y resultados potenciales usando regresión logística implementada solo con la biblioteca estándar. Al final imprime el tamaño de la muestra, la media de los puntajes de propensión y una estimación del ATE por g-computation para validar el recorrido de principio a fin.
+The script generates synthetic data, estimates treatment probabilities, missingness mechanisms, and potential outcomes using logistic regression implemented only with the standard library. It prints the sample size, the mean propensity scores, and an ATE estimate via g-computation to validate the full run.
 
-### Ejemplo autocontenido en R para integración temprana
+### Self-contained R example for early integration
 
-Si quieres ver cómo se encadenan las funciones de los scripts R para estimar `g1W`, `pDelta1` y `Q` y lanzar `tmle()` sin depender de archivos externos, ejecuta:
+If you want to see how the functions in the R scripts are chained to estimate `g1W`, `pDelta1`, and `Q` and to call `tmle()` without depending on external files, run:
 
 ```r
 Rscript early_integration_quickstart.R
 ```
 
-El flujo realiza lo siguiente:
+This flow performs the following:
 
-- `synthetic_integration_examples.R`: genera `Y`, `A`, `Delta` y la vista `W_early`.
-- `func_extractVars.R`: aporta los screeners `func_clinical`/`new.screen.randomForest` usados por los learners.
-- `func_SuperLearners.R`: utiliza `SL.early.rf` para ajustar los modelos de probabilidad de tratamiento, mecanismo de observación y resultado.
-- `tmle`: combina `g1W`, `pDelta1` y `Q` para entregar la estimación TMLE del efecto del tratamiento.
+- `synthetic_integration_examples.R`: generates `Y`, `A`, `Delta`, and the `W_early` view.
+- `func_extractVars.R`: provides the screeners `func_clinical`/`new.screen.randomForest` used by the learners.
+- `func_SuperLearners.R`: uses `SL.early.rf` to fit the treatment probability, missingness, and outcome models.
+- `tmle`: combines `g1W`, `pDelta1`, and `Q` to deliver the TMLE estimate of the treatment effect.
 
-## Ejemplo mínimo con datos sintéticos
+## Minimal example with synthetic data
 
-Si quieres probar la estructura de las tres estrategias de integración sin preparar datos reales, ejecuta:
+If you want to test the structure of the three integration strategies without preparing real data, run:
 
 ```r
 source("synthetic_integration_examples.R")
-# genera un archivo data/synthetic_integration_example.rds con:
-# - W_early: clínicas + ómicas concatenadas
-# - W_intermediate: clínicas + componentes principales por modalidad
-# - W_late: lista separada por modalidad
+# generates a data/synthetic_integration_example.rds file with:
+# - W_early: clinical + omics concatenated
+# - W_intermediate: clinical + principal components by modality
+# - W_late: list separated by modality
 ```
 
-Luego puedes conectar esas vistas a tus learners en `quick_tmle_early_integration.R`, `quick_tmle_intermediate_integration.R` o `quick_tmle_late_integration.R` para validar el flujo completo.
+You can then connect those views to your learners in `quick_tmle_early_integration.R`, `quick_tmle_intermediate_integration.R`, or `quick_tmle_late_integration.R` to validate the full flow.
 
-## Datos
+## Data
 
-Los scripts esperan matrices procesadas de expresión génica (mRNA), variaciones en el número de copias (CNV) y variables clínicas derivadas de TCGA. El repositorio no incluye datos por restricciones de tamaño/privacidad; agrega los archivos de entrada en las rutas referenciadas en los scripts (`C:/Users/...` en los ejemplos) o adapta las fuentes a tu entorno.
+The scripts expect processed matrices for gene expression (mRNA), copy-number variation (CNV), and clinical variables derived from TCGA. The repository does not include data because of size/privacy constraints; add the input files at the paths referenced in the scripts (`C:/Users/...` in the examples) or adapt the sources to your environment.
 
-## Licencia
+## License
 
-Este proyecto se distribuye bajo la licencia MIT. Consulta el archivo `LICENSE` para más detalles.
+This project is distributed under the MIT license. See the `LICENSE` file for details.
