@@ -45,7 +45,10 @@ Repositorio con scripts para experimentar con Targeted Maximum Likelihood Estima
 source("func_extractVars.R")
 source("func_learners_v2.R")
 source("func_SuperLearners.R")
-# Ajusta las rutas de origen de datos dentro de cada script según tu entorno
+# Ajusta las rutas de origen de datos dentro de cada script según tu entorno.
+# quick_tmle_early_integration.R usa la variable de entorno TMLE_TCGA_DATA; si
+# el archivo no existe, generará automáticamente un dataset sintético para
+# ejecutar el ejemplo de integración temprana de principio a fin.
 
 # 2) Ejecutar un pipeline TMLE (ejemplo: integración temprana)
 source("quick_tmle_early_integration.R")

@@ -21,14 +21,16 @@
 ## ------------------------------------ ##
 ### ... a. Libraries and functions ... ###
 ## ----------------------------------- ###
-library(tmle)
-library(caret)
-library(dplyr)
-library(purrr)
-library(ggplot2)
-library(RhpcBLASctl)
-library(SuperLearner)
-library(tibble)
+suppressPackageStartupMessages({
+  library(tmle)
+  library(caret)
+  library(dplyr)
+  library(purrr)
+  library(ggplot2)
+  library(RhpcBLASctl)
+  library(SuperLearner)
+  library(tibble)
+})
 
 ## ----------------------------------- ##
 ### ... b. parallelizing options ... ###
@@ -42,24 +44,38 @@ set.seed(123)
 ### ... c. Load data ... ###
 ## ---------------------- ##
 data_path <- Sys.getenv("TMLE_TCGA_DATA", unset = file.path("data", "O_Y_A_Delta_W.csv"))
-if (!file.exists(data_path)) {
-  stop("No se encontró el archivo de datos en ", data_path, ". Actualiza la ruta o define TMLE_TCGA_DATA.")
+use_synthetic <- FALSE
+
+if (file.exists(data_path)) {
+  O <- read.csv(file = data_path)
+
+  Y <- ifelse(O$Y < 365, 1, 0)
+  Delta <- ifelse(O$delta == 0 & O$Y < 365, 0, 1)
+  A <- O$A
+  W <- O[, !(colnames(O) %in% c("Y", "X", "delta", "...3078"))]
+} else {
+  message("No se encontró el archivo de datos en ", data_path, "; se usarán datos sintéticos.")
+  source("synthetic_integration_examples.R")
+  synthetic_data <- generate_synthetic_integration_data(n = 250, seed = 20240201)
+  Y <- synthetic_data$Y
+  Delta <- synthetic_data$Delta
+  A <- synthetic_data$A
+  W <- synthetic_data$W_early
+  W$A <- A
+  use_synthetic <- TRUE
 }
-
-O <- read.csv(file = data_path)
-
-Y <- ifelse(O$Y < 365, 1, 0)
-Delta <- ifelse(O$delta == 0 & O$Y < 365, 0, 1)
-A <- O$A
-W <- O[, !(colnames(O) %in% c("Y", "X", "delta", "...3078"))]
 
 factor_cols <- c(
   "clinical_primary_diagnosis", "clinical_gender", "clinical_IDH_codel_subtype",
-  "clinical_MGMT_promoter_status", "clinical_ATRX_status", "clinical_Chr7_gain_and_Chr10_loss", "A"
+  "clinical_MGMT_promoter_status", "clinical_ATRX_status", "clinical_Chr7_gain_and_Chr10_loss", "A",
+  "gender", "subtype"
 )
 
 W <- W %>%
-  mutate(across(any_of(factor_cols), as.factor))
+  mutate(
+    across(any_of(factor_cols), as.factor),
+    across(where(is.character), as.factor)
+  )
 
 ## --------------------------------------------------------------------- ##
 ### ... d. Conditional treatment assignment probabilities, P(A=1|W) ... ###
