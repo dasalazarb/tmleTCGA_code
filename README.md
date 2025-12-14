@@ -19,6 +19,7 @@ Repositorio con scripts para experimentar con Targeted Maximum Likelihood Estima
 - **no_used_*.R**: versiones antiguas o dependientes de rutas absolutas que se conservan solo como referencia histórica.
 - **func_learners.R**, **func_learners_v2.R**, **func_SuperLearners.R**: definiciones de *wrappers* para `SuperLearner` (random forest, xgboost, MARS, GLM, etc.) y ensamblados preconfigurados.
 - **func_DimenReduc.R**: utilidades para reducción de dimensionalidad (PCA, KPCA, NMF, autoencoders) sobre matrices de expresión y CNV.
+- **synthetic_integration_examples.R**: genera datos sintéticos listos para ejemplos rápidos de integración temprana, intermedia y tardía sin depender de archivos externos.
 - **func_extractVars.R**, **func_othersFromtmlePackage.R**: funciones auxiliares para preparar variables de entrada y compatibilidad con el paquete `tmle`.
 - **give_O_*.R**, **01_LGG_clinic_treatment_data_*.R**: scripts de preparación de datos clínicos/ómicos y generación de matrices de entrada (*O* = {Y, A, Δ, W}).
 - **gtsummary_O_data.R**, **plot_comparison_var50_to_1000.R**: resúmenes y visualizaciones de resultados.
@@ -53,6 +54,20 @@ source("quick_tmle_early_integration.R")
 ```
 
 Para usar los ensamblados completos con múltiples estrategias de integración, ejecuta `tmle_all_quick-v4.R`, que arma bibliotecas `SuperLearner` con learners clínicos, ómicos y reducciones de dimensionalidad.
+
+## Ejemplo mínimo con datos sintéticos
+
+Si quieres probar la estructura de las tres estrategias de integración sin preparar datos reales, ejecuta:
+
+```r
+source("synthetic_integration_examples.R")
+# genera un archivo data/synthetic_integration_example.rds con:
+# - W_early: clínicas + ómicas concatenadas
+# - W_intermediate: clínicas + componentes principales por modalidad
+# - W_late: lista separada por modalidad
+```
+
+Luego puedes conectar esas vistas a tus learners en `quick_tmle_early_integration.R`, `quick_tmle_intermediate_integration.R` o `quick_tmle_late_integration.R` para validar el flujo completo.
 
 ## Datos
 
