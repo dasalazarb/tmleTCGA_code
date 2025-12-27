@@ -41,19 +41,19 @@ Repository with scripts to experiment with Targeted Maximum Likelihood Estimatio
 
 ## Quick R run
 
-### End-to-end CLI pipeline (recomendada)
+### End-to-end CLI pipeline (recommended)
 
 ```bash
-# Usa un archivo CSV/RDS con columnas Y, A, Delta y el resto de covariables
-Rscript pipelines/run_tmle_pipeline.R --data /ruta/a/datos.csv
+# Use a CSV/RDS file with columns Y, A, Delta, and all covariates
+Rscript pipelines/run_tmle_pipeline.R --data /path/to/data.csv
 
-# O bien genera datos sintéticos si no tienes archivos locales
+# Or generate synthetic data if you do not have local files
 Rscript pipelines/run_tmle_pipeline.R --simulate --n 400 --seed 20240301
 ```
 
-El script guarda un resumen en `results/tmle_summary.txt` y acepta la variable de entorno `TMLE_TCGA_DATA` como fuente por defecto.
+The script saves a summary to `results/tmle_summary.txt` and accepts the `TMLE_TCGA_DATA` environment variable as the default data source.
 
-### Flujos de notebook/analítico
+### Notebook/analytical flows
 
 ```r
 # 1) Load functions and data
