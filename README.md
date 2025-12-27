@@ -14,9 +14,9 @@ Repository with scripts to experiment with Targeted Maximum Likelihood Estimatio
 
 ## Repository structure
 
+- **pipelines/run_tmle_pipeline.R**: end-to-end CLI pipeline that consumes a user-provided dataset (CSV/RDS) or automatically generates synthetic data to estimate the ATE with TMLE and SuperLearner.
 - **quick_tmle_early_integration.R / quick_tmle_late_integration.R / quick_tmle_intermediate_integration.R / tmle_all_quick-v4.R**: TMLE pipelines for early, late, and intermediate integration of clinical and omics data.
 - **tmle_ps_and_missmech.R**: helper functions for TMLE and missingness mechanisms with different configurations.
-- **no_used_*.R**: older versions or scripts tied to absolute paths kept only for historical reference.
 - **func_learners.R**, **func_learners_v2.R**, **func_SuperLearners.R**: definitions of `SuperLearner` wrappers (random forest, xgboost, MARS, GLM, etc.) and preconfigured ensembles.
 - **func_DimenReduc.R**: utilities for dimensionality reduction (PCA, KPCA, NMF, autoencoders) on expression and CNV matrices.
 - **synthetic_integration_examples.R**: generates synthetic data for quick examples of early, intermediate, and late integration without external files.
@@ -24,6 +24,7 @@ Repository with scripts to experiment with Targeted Maximum Likelihood Estimatio
 - **give_O_*.R**, **01_LGG_clinic_treatment_data_*.R**: scripts to prepare clinical/omics data and build input matrices (O = {Y, A, Δ, W}).
 - **gtsummary_O_data.R**, **plot_comparison_var50_to_1000.R**: result summaries and visualizations.
 - **reducDimenMethods_Optuna.py**: hyperparameter search with Optuna for dimensionality-reduction models in Python.
+- **archive/**: deprecated or exploratory scripts preserved for reference.
 - **LICENSE**: MIT license.
 
 ## Suggested workflow
@@ -39,6 +40,20 @@ Repository with scripts to experiment with Targeted Maximum Likelihood Estimatio
 6. **Explore results**: review plots (for example, propensity-score and risk densities) produced in the TMLE scripts or `plot_comparison_var50_to_1000.R`, and summary tables from `gtsummary_O_data.R`.
 
 ## Quick R run
+
+### End-to-end CLI pipeline (recomendada)
+
+```bash
+# Usa un archivo CSV/RDS con columnas Y, A, Delta y el resto de covariables
+Rscript pipelines/run_tmle_pipeline.R --data /ruta/a/datos.csv
+
+# O bien genera datos sintéticos si no tienes archivos locales
+Rscript pipelines/run_tmle_pipeline.R --simulate --n 400 --seed 20240301
+```
+
+El script guarda un resumen en `results/tmle_summary.txt` y acepta la variable de entorno `TMLE_TCGA_DATA` como fuente por defecto.
+
+### Flujos de notebook/analítico
 
 ```r
 # 1) Load functions and data
